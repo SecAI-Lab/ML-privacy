@@ -22,7 +22,10 @@ def get_report(data):
 
     attack_types = [
         AttackType.THRESHOLD_ATTACK,
-        AttackType.LOGISTIC_REGRESSION
+        AttackType.LOGISTIC_REGRESSION,
+        AttackType.RANDOM_FOREST,
+        AttackType.K_NEAREST_NEIGHBORS,
+        AttackType.THRESHOLD_ENTROPY_ATTACK
     ]
 
     attacks_result = mia.run_attacks(attack_input=attack_input,
