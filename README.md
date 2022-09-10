@@ -1,13 +1,14 @@
 ## ML-privacy
 
-Content:
-    
-> `tests/mia-cifar10.ipynb` - example of MIA on cifar10 dataset
- 
-> `tests/mia-text.py` - example of MIA on tensorflow `imdb-reviews` dataset 
+Privacy evaluation on Deep learning models 
 
-Main library requirements:
+### How to test
+        cd src/tf-privacy
 
-        tensorflow=>2.7
-        tensorflow-hub==0.12.0
-        tensorflow-privacy==0.8.0
+        pip install -r requirements.txt
+        
+        python runner.py [model_type]
+
+Available models
+
+> <b>model_type</b>: alexnet, densenet, resnet

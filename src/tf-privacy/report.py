@@ -1,7 +1,7 @@
 import tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.membership_inference_attack as mia
-from tensorflow_privacy.privacy.membership_inference_attack.data_structures import AttackInputData
-from tensorflow_privacy.privacy.membership_inference_attack.data_structures import SlicingSpec
-from tensorflow_privacy.privacy.membership_inference_attack.data_structures import AttackType
+from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_structures import AttackInputData
+from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_structures import SlicingSpec
+from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_structures import AttackType
 
 
 def get_report(data):
@@ -21,11 +21,10 @@ def get_report(data):
     )
 
     attack_types = [
-        AttackType.THRESHOLD_ATTACK,
-        AttackType.LOGISTIC_REGRESSION,
+        # AttackType.THRESHOLD_ATTACK,
         AttackType.RANDOM_FOREST,
         AttackType.K_NEAREST_NEIGHBORS,
-        AttackType.THRESHOLD_ENTROPY_ATTACK
+        # AttackType.THRESHOLD_ENTROPY_ATTACK
     ]
 
     attacks_result = mia.run_attacks(attack_input=attack_input,

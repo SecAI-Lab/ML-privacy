@@ -2,8 +2,8 @@ import tensorflow as tf
 import numpy as np
 
 
-def load_cifar10():
-    train, test = tf.keras.datasets.cifar10.load_data()
+def load_cifar100():
+    train, test = tf.keras.datasets.cifar100.load_data()
     train_data, train_labels = train
     test_data, test_labels = test
 
