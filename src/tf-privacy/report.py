@@ -21,7 +21,7 @@ def get_report(data):
     )
 
     attack_types = [
-        # AttackType.THRESHOLD_ATTACK,
+        AttackType.THRESHOLD_ATTACK,
         AttackType.RANDOM_FOREST,
         AttackType.K_NEAREST_NEIGHBORS,
         # AttackType.THRESHOLD_ENTROPY_ATTACK
