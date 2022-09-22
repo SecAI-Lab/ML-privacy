@@ -3,7 +3,7 @@
 Privacy evaluation on Deep learning models 
 
 ### How to test
-        cd src/tf-privacy
+        cd tests/tf-privacy
 
         pip install -r requirements.txt
         
@@ -11,4 +11,4 @@ Privacy evaluation on Deep learning models
 
 Available models
 
-> <b>model_type</b>: alexnet, densenet, resnet
+> <b>model_type</b>: alexnet, densenet, texas
