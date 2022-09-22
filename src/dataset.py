@@ -15,11 +15,11 @@ def test_dataset():
         ]
     )
     batch_size = 64
-    trainset = CIFAR10(root='./data', train=True,
+    trainset = CIFAR100(root='./data', train=True,
                                             download=True, transform=transform)
     trainloader = DataLoader(trainset, batch_size=batch_size,
                                             shuffle=True, num_workers=2)
-    testset = CIFAR10(root='./data', train=False,
+    testset = CIFAR100(root='./data', train=False,
                                         download=True, transform=transform)
     testloader = DataLoader(testset, batch_size=batch_size,
                                             shuffle=False, num_workers=2)
