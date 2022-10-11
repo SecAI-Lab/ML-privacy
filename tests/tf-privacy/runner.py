@@ -36,12 +36,12 @@ if __name__ == '__main__':
 
     logging.info('Training target model')
     history = model.fit(
-        train_data, train_labels,
-        validation_data=(test_data, test_labels),
+        train_data,
+        validation_data=test_data,
         epochs=conf.epochs,
         batch_size=conf.batch_size
     )
-    plot_loss(history, model_type)
+    #plot_loss(history, model_type)
     # logging.info('Training shadow model')
     # shadow = TYPE.TEXAS_SHADOW()
     # shadow.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
@@ -65,28 +65,28 @@ if __name__ == '__main__':
 
     logging.info('Compute losses...')
     cce = tf.keras.backend.categorical_crossentropy
-    constant = tf.keras.backend.constant
-    if model_type == 'texas':
-        y_train_onehot = to_categorical(train_labels)
-    else:
-        y_train_onehot = to_categorical(train_labels)
+    constant = tf.keras.backend.constant    
+    
+    y_train_onehot = to_categorical(train_labels)
     y_test_onehot = to_categorical(test_labels)
+    
     loss_train = cce(
         constant(y_train_onehot), constant(prob_train), from_logits=False).numpy()
     loss_test = cce(
         constant(y_test_onehot), constant(prob_test), from_logits=False).numpy()
+    print('Loss train', loss_train, loss_train.shape)
+    print('Loss test', loss_test, loss_test.shape)
+    # prediction_data = PredictionData(
+    #     logits_test=logits_test,
+    #     logits_train=logits_train,
+    #     loss_test=loss_test,
+    #     loss_train=loss_train,
+    #     train_labels=train_labels,
+    #     test_labels=test_labels
+    # )
 
-    prediction_data = PredictionData(
-        logits_test=logits_test,
-        logits_train=logits_train,
-        loss_test=loss_test,
-        loss_train=loss_train,
-        train_labels=train_labels,
-        test_labels=test_labels
-    )
-
-    attacks_result, input, spec = get_report(prediction_data)
-    logging.info(attacks_result.summary(by_slices=True))
+    # attacks_result, input, spec = get_report(prediction_data)
+    # logging.info(attacks_result.summary(by_slices=True))
 
     # max_auc_attacker, max_advantage = get_advantage(attacks_result)
     # membership_probability_results = get_prob(input, spec)

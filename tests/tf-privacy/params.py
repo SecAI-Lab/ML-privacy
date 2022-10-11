@@ -15,6 +15,6 @@ class PredictionData:
 class Configs:
     threshold = [1, 0.9, 0.8, 0.7, 0.6, 0.5]
     batch_size = 32
-    epochs = 10
+    epochs = 1
     input_shape = (224, 224, 3)
     num_classes = 100

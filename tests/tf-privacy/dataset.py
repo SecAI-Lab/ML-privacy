@@ -6,7 +6,7 @@ import os
 
 def process_images(image, label):
     image = tf.image.per_image_standardization(image)
-    image = tf.image.resize(image, (224, 224))
+    image = tf.image.resize(image, (227, 227))
     return image, label
 
 
