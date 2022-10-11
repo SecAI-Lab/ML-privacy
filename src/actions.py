@@ -62,6 +62,42 @@ def train_model(dataloader, model, mode='target'):
     return path
 
 
+def test_model(dataloader, model, PATH=None, mode='test'):
+    criterion = nn.CrossEntropyLoss()            
+    loss = 0.0
+    acc = 0
+    label_preds = []
+    labels, logits = [], []
+    
+    if PATH:
+        validate_path(PATH)
+        print(f"loading saved model - {PATH}....")
+        model.load_state_dict(torch.load(PATH))         
+        
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    model.eval()
+   
+    for inp, tar in dataloader:            
+        inputs = inp.to(conf.device)
+        target = tar.to(conf.device)                            
+        optimizer.zero_grad()
+        pred = model(inputs)                        
+        loss = criterion(pred, target) 
+        _, preds = torch.max(pred, 1)                                   
+        loss += loss.item() * inputs.size(0)
+        acc += torch.sum(preds == target.data) 
+
+        logits.append(pred.cpu().detach())
+        label_preds.append(preds.cpu().detach())           
+        labels.append(target.data.cpu().detach())        
+        
+    if mode == 'train':
+        return loss, acc
+    else:  
+        print('Test Loss: {}, Acc: {}'.format(loss/len(dataloader.dataset), acc/len(dataloader.dataset)))                     
+        return torch.cat(labels, dim=0), torch.cat(logits, dim=0) 
+
+
 def train_attacker(model, pos_sample, pos_sample_, neg_sample):
     loss_func = ContrastiveLoss()    
     optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
@@ -123,41 +159,4 @@ def test_attacker(model, data):
     #        correct += 1
     #print('Accuracy:', correct/len(labels))
     
-
-def test_model(dataloader, model, PATH=None, mode='test'):
-    criterion = nn.CrossEntropyLoss()            
-    loss = 0.0
-    acc = 0
-    label_preds = []
-    labels, logits = [], []
-    
-    if PATH:
-        validate_path(PATH)
-        print(f"loading saved model - {PATH}....")
-        model.load_state_dict(torch.load(PATH))         
-        
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    model.eval()
-   
-    for inp, tar in dataloader:            
-        inputs = inp.to(conf.device)
-        target = tar.to(conf.device)                            
-        optimizer.zero_grad()
-        pred = model(inputs)                        
-        loss = criterion(pred, target) 
-        _, preds = torch.max(pred, 1)                                   
-        loss += loss.item() * inputs.size(0)
-        acc += torch.sum(preds == target.data) 
-
-        logits.append(pred.cpu().detach())
-        label_preds.append(preds.cpu().detach())           
-        labels.append(target.data.cpu().detach())        
-        
-    if mode == 'train':
-        return loss, acc
-    else:  
-        print('Test Loss: {}, Acc: {}'.format(loss/len(dataloader.dataset), acc/len(dataloader.dataset)))                     
-        return torch.cat(labels, dim=0), torch.cat(logits, dim=0) 
-
-
 
