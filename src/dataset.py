@@ -1,14 +1,11 @@
 import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
-import random
-from torchvision.datasets import CIFAR100, STL10
-from torch.utils.data import DataLoader
+from torchvision.datasets import CIFAR100, CelebA
+from torch.utils.data import DataLoader, Dataset
 from data import WhiteBoxDataloader
 import conf
-from utils.plotter import plot_pred_diff
+from utils import utils
 
 torch.manual_seed(17)
 
@@ -63,6 +60,57 @@ class Cifar100Dataset:
 
         return dataloader
 
+
+class AttackDataset(Dataset):
+    def __init__(self, train_logits, test_logits, train=True) -> None:
+        super().__init__()
+        self.test_logits = torch.cat([test_logits, test_logits])
+        self.train_logits_ = train_logits[len(test_logits)*2:len(test_logits)*4] 
+        self.train_logits = train_logits[:len(test_logits)*2]
+        data = self.init_label()
+        self.data, self.labels = utils.split_data(data)              
+        self.is_train = train        
+    
+    def __len__(self):       
+        return len(self.labels)    
+    
+    def init_label(self):
+        #TODO: optimize by combining splitter
+        attack_data = []        
+        for member, non_member in zip(self.train_logits, self.test_logits):                
+            attack_data.append((member.cpu().detach().numpy(), 1))
+            attack_data.append((non_member.cpu().detach().numpy(), 0)) 
+        return attack_data
+
+    def __getitem__(self, idx):                       
+        return (self.data[idx], self.labels[idx])
+
+
+
+def prepare_attack_data(train_logits, test_logits):          
+    """Preparing data for non-NN attack model"""
+    
+    attack_data = []            
+    train_logits_ = train_logits[:len(test_logits)]
+    train_logits = train_logits[len(test_logits):len(test_logits)*2]  
+   
+    dist_neg = torch.cdist(train_logits, test_logits)
+    dist_pos = torch.cdist(train_logits, train_logits_)
+    
+    # Labeling positive and negative samples
+    for member, non_member in zip(dist_pos, dist_neg):                
+        attack_data.append((member.cpu().detach().numpy(), 1))
+        attack_data.append((non_member.cpu().detach().numpy(), 0))           
+        
+    # random.shuffle(attack_data)
+    # plot_pred_diff(dist_neg[:50], dist_pos[:50])           
+    return attack_data 
+
+
+
+"""
+Not used
+
 class STL10Dataset:
     def __init__(self) -> None:
         pass
@@ -102,37 +150,5 @@ class STL10Dataset:
         print(len(train_loader), len(test_loader), len(shadow_trainloader), len(shadow_testloader))
         return dataloader
 
-
-def prepare_attack_data(train_logits, test_logits):          
-    """Preparing data for non-NN attack model"""
-    
-    attack_data = []            
-    train_logits_ = train_logits[:len(test_logits)]
-    train_logits = train_logits[len(test_logits):len(test_logits)*2]  
-   
-    dist_neg = torch.cdist(train_logits, test_logits)
-    dist_pos = torch.cdist(train_logits, train_logits_)
-    
-    # Labeling positive and negative samples
-    for member, non_member in zip(dist_pos, dist_neg):                
-        attack_data.append((member.cpu().detach().numpy(), 1))
-        attack_data.append((non_member.cpu().detach().numpy(), 0))           
-        
-    random.shuffle(attack_data)
-    # plot_pred_diff(dist_neg[:50], dist_pos[:50])           
-    return attack_data 
-
-def prepare_nn_attack_data(train_logits, test_logits):
-    """Preparing data for NN attack model"""
-    
-    pos_sample = []
-    neg_sample = []
-    train_logits_ = train_logits[:len(test_logits)]
-    train_logits = train_logits[len(test_logits):len(test_logits)*2]    
-    
-    # pos_sample = torch.stack([train_logits, train_logits_], dim=0)
-    # neg_sample = torch.stack([train_logits, test_logits], dim=0)
-    # print('pos samepl', pos_sample.shape)
-    
-    return train_logits, train_logits_, test_logits
+"""
 

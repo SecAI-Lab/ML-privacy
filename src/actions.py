@@ -1,12 +1,17 @@
+from unittest import TestLoader
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader
+
 from tqdm import tqdm
 import conf
 from utils.plotter import *
-from utils.utils import validate_path
-from models.attack import ContrastiveLoss
+from utils.utils import validate_path, split_data
+from models.attack import ContrastiveLoss, SupervisedContrastiveLoss
+from pytorch_metric_learning import distances, losses, miners, reducers, testers
+from pytorch_metric_learning.utils.accuracy_calculator import AccuracyCalculator
 
 def train_model(dataloader, model, mode='target'):
     criterion = nn.CrossEntropyLoss()        
@@ -14,7 +19,7 @@ def train_model(dataloader, model, mode='target'):
     trainloader = dataloader.target_trainloader
     testloader = dataloader.target_valloader
     losses = {'train': [], 'val': []}
-    path = f'./weights/{mode}_stl10.pt'
+    path = f'./weights/{mode}_cifar100.pt'
     #validate_path('./weights')
 
     if mode == 'shadow':
@@ -63,9 +68,8 @@ def train_model(dataloader, model, mode='target'):
 def test_model(dataloader, model, PATH=None, mode='test'):
     criterion = nn.CrossEntropyLoss()            
     loss = 0.0
-    acc = 0
-    label_preds = []
-    labels, logits = [], []
+    acc = 0    
+    logits = []
     
     if PATH:
         validate_path(PATH)
@@ -84,77 +88,65 @@ def test_model(dataloader, model, PATH=None, mode='test'):
         _, preds = torch.max(pred, 1)                                   
         loss += loss.item() * inputs.size(0)
         acc += torch.sum(preds == target.data) 
-
-        logits.append(pred.cpu().detach())
-        label_preds.append(preds.cpu().detach())           
-        labels.append(target.data.cpu().detach())        
+        logits.append(pred.cpu().detach())       
         
     if mode == 'train':
         return loss, acc
     else:  
         print('Test Loss: {}, Acc: {}'.format(loss/len(dataloader.dataset), acc/len(dataloader.dataset)))                     
-        return torch.cat(labels, dim=0), torch.cat(logits, dim=0) 
+        return torch.cat(logits, dim=0) 
 
 
-def train_attacker(model, pos_sample, pos_sample_, neg_sample):
-    loss_func = ContrastiveLoss()    
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
-    ep_log_interval = 4
-    #print(pos_sample.shape)
-    # pos_sample = torch.transpose(torch.from_numpy(pos_sample), (1, 0, 2))
-    # neg_sample = torch.transpose(torch.from_numpy(neg_sample), (1, 0, 2))    
-    print(pos_sample.shape)
-
+def train_attacker(model, data):
+    path = f'./weights/NN_attack_2layer.pt'
+    #loss_func = SupervisedContrastiveLoss()       
+    loss_bce = torch.nn.BCELoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)          
+    batch = 200    
+    trainloader = DataLoader(data, shuffle=True, batch_size=batch)    
+    print(len(trainloader))    
+    accur, losses = [], []
     model.train()    
-    for epoch in range(40):        
-        p_loss, n_loss = 0, 0
-        #for x1, x2 in zip(in_train, not_in_train):            
-        x1, x2 = model(pos_sample, pos_sample_)            
-        y1, y2 = model(pos_sample, neg_sample)            
-        optimizer.zero_grad()              
-        loss_pos = loss_func(x1, x2, flag=0)        
-        loss_neg = loss_func(y1, y2, flag=1)        
-        p_loss += loss_pos.item() 
-        n_loss += loss_neg.item() 
-        loss_pos.backward()        
-        loss_neg.backward()        
-        optimizer.step() 
-        #print('pos', loss_pos.item())
-        #print('neg', loss_neg.item())    
-        if epoch % ep_log_interval == 0:
-            print("epoch = %4d  | pos_loss = %10.4f, neg_loss = %10.4f," % (epoch, p_loss, n_loss))
-    print('member', torch.max(y1, dim=1))
-    print('non_member', torch.max(y2, dim=1))
-    print("Done ") 
+    for epoch in range(700):
+        acc = 0
+        for data, label in trainloader:                    
+            out = model(data)                        
+            loss_ = loss_bce(out, label.reshape(-1, 1).type(torch.FloatTensor))
+            acc += torch.sum(out.reshape(-1).round() == label)  
+            optimizer.zero_grad()
+            loss_.backward()            
+            optimizer.step()               
+        losses.append(loss_.cpu().detach().numpy())
+        accur.append(acc.cpu().detach().numpy()/len(trainloader.dataset))
+        if epoch % 10 == 0:    
+            print("epoch = %4d  | loss = %10.4f, acc = %10.4f" % (epoch, loss_, acc/len(trainloader.dataset)))
+    plot_loss(losses, accur)
+    print("saving model ...")
+    torch.save(model.state_dict(), path)
 
 
 def test_attacker(model, data):
-    loss = nn.MSELoss()    
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
-    inpt = torch.FloatTensor(np.array([x[0] for x in data]))
-    labels = torch.FloatTensor(np.array([y[1] for y in data]))
-    model.eval()
-    preds = model(inpt)
-    optimizer.zero_grad()
-    loss_val = loss(preds, labels)
-    from sklearn.metrics import roc_curve, auc
-    fpr, tpr, thresholds =roc_curve(labels, preds.cpu().detach().numpy())
-    roc_auc = auc(fpr, tpr)
-    print("Area under the ROC curve : %f" % roc_auc)    
-    print(thresholds)
-    thresh = 0.5    
-    bin_preds = []
-    # for pred, tru in zip(preds, labels):
-    #     print(pred, tru)
-        #if Pred > thresh:
-        #    bin_preds.append(1)
-        #else:
-        #    bin_preds.append(0)
-
-    correct = 0
-    #for pred, target in zip(bin_preds, labels):
-    #    if pred == target:
-    #        correct += 1
-    #print('Accuracy:', correct/len(labels))
+    path = f'./weights/NN_attack_2layer.pt'    
+    if model:
+        validate_path(path)
+        print(f"loading saved attack model - {path}....")
+        model.load_state_dict(torch.load(path)) 
     
+    loss_bce = torch.nn.BCELoss()     
+    batch = 100    
+    testloader = DataLoader(data, shuffle=True, batch_size=batch)        
+    acc_1 = 0
+    acc_2 = 0
 
+    model.eval()
+    for data, label in testloader:  
+        out = model(data) 
+        loss_ = loss_bce(out, label.reshape(-1, 1).type(torch.FloatTensor))        
+        for pred, tru in zip(out.reshape(-1), label):
+            acc_1 += 1 if pred > 0.5 else 0
+            acc_2 += 1 if pred.round() == tru else 0
+        #acc += torch.sum(out.reshape(-1).round() == label) 
+        #print(out.reshape(-1).round(), label)
+    print("Test loss = %10.4f, Test acc_1 = %10.4f, acc_2 = %10.4f" % (loss_, acc_1/len(testloader.dataset), acc_2/len(testloader.dataset)))                              
+            
+    

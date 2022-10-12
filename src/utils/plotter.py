@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn  as sns
 
-def plot_loss(loss, label):
-    plt.plot(loss['train'])
-    plt.plot(loss['val'])
-    plt.title('model Loss')
-    plt.ylabel('loss')
+def plot_loss(loss, accur):
+    plt.plot(loss)
+    plt.plot(accur)
+    plt.title('model Loss vs Accuracy')
+    #plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.savefig(f'{label}_train.png')
+    plt.legend(['loss', 'acc'], loc='upper left')
+    plt.savefig(f'attack_train_2layer.png')
 
 def plot_cifar_probs(test, train, in_train_acc, non_train_acc):        
     #max_probs = np.amax(probs, axis=1)   
@@ -36,10 +36,16 @@ def plot_cifar_probs(test, train, in_train_acc, non_train_acc):
     #plt.savefig('target_probs_SOFTMAX.png')
     
 def plot_pred_diff(x, y):
+            
+    # for i in range(2):            
+    #     plt.scatter(x, y, label=str(i))
+    # plt.legend()
+    # plt.savefig('./plots/preds.png')
+    
     plt.plot(x)    
     plt.plot(y)
-    # plt.ylabel('Classes')
-    # plt.xlabel('Data inputs')
+    plt.ylabel('Classes')
+    plt.xlabel('Data inputs')
     plt.legend(['negative distance', 'positive distance'],  loc='upper left')
-    plt.title('Cosine Distance between positive and negative samples')
-    plt.savefig('cos_dist.png')
+    plt.title('positive and negative samples')
+    plt.savefig('plots/preds.png')
