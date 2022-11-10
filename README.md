@@ -1,14 +1,17 @@
 ## ML-privacy
 
-Privacy evaluation on Deep learning models 
+Privacy risk assesment tool on Deep learning models 
 
-### How to test
-        cd tests/tf-privacy
+### How to use
 
-        pip install -r requirements.txt
-        
-        python runner.py [model_type]
+        cd src/
 
-Available models
+        python attack.py cnn
 
-> <b>model_type</b>: alexnet, densenet, texas
+<b>Available attack</b>: MIA (Memebership Inference)
+
+<b>Default attacker</b>: EnsembleAttacker (RF, LR, MLP, KNN) 
+
+<b>Target model</b>: DenseNet121
+
+<b>Dataset</b>: Cifar10 (default) and Cifar100
