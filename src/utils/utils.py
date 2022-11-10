@@ -2,6 +2,8 @@ import os
 import numpy as np
 
 def validate_path(path):
+    if os.path.exists(path):
+        return True
     if not os.path.exists(path) and os.path(path).isdir():
         os.makedirs(path)
     elif not os.path.exists(path):

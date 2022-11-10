@@ -1,2 +1,2 @@
 tensorflow==2.9.1
-tensorflow-privacy==0.8.0
+tensorflow-privacy

@@ -16,7 +16,7 @@ class BaseModel(ABC):
     def test(self, model_path, dataloader):
         model = self.fine_tune()
         model = model.to(conf.device)
-        probs = test_model(dataloader, model, model_path)
+        probs = test_model(dataloader, model, model_path, rnn=False)
         return probs
    
     

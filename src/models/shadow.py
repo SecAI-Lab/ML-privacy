@@ -31,4 +31,4 @@ class ShadowModel(BaseModel):
             model = self.get_white_box()
         
         model = model.to(conf.device)
-        train_model(dataloader, model, 'shadow')
+        train_model(dataloader, model, conf.cifar_shadow_path, 'shadow', rnn=False)

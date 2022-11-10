@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn  as sns
 
-def plot_loss(loss, accur):
-    plt.plot(loss)
-    plt.plot(accur)
-    plt.title('model Loss vs Accuracy')
-    #plt.ylabel('loss')
+def plot_loss(loss, mode):
+    plt.plot(loss['train'])
+    plt.plot(loss['val'])
+    plt.title('model train and val Loss')
+    plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['loss', 'acc'], loc='upper left')
-    plt.savefig(f'attack_train_2layer.png')
+    plt.legend(['loss', 'val'], loc='upper left')
+    plt.savefig(f'{mode}_loss.png')
 
 def plot_cifar_probs(test, train, in_train_acc, non_train_acc):        
     #max_probs = np.amax(probs, axis=1)   

@@ -6,12 +6,12 @@ from tensorflow_privacy.privacy.privacy_tests.membership_inference_attack.data_s
 
 def get_report(data):
     attack_input = AttackInputData(
-        #logits_train=data.logits_train,
-        #logits_test=data.logits_test,
+        logits_train=data.logits_train,
+        logits_test=data.logits_test,
         loss_train=data.loss_train,
         loss_test=data.loss_test,
-        #labels_train=data.train_labels,
-        #labels_test=data.test_labels
+        labels_train=data.train_labels,
+        labels_test=data.test_labels
     )
     slicing_spec = SlicingSpec(
         entire_dataset=True,
@@ -21,15 +21,15 @@ def get_report(data):
     )
 
     attack_types = [
-        AttackType.THRESHOLD_ATTACK,
+        #AttackType.THRESHOLD_ATTACK,
         AttackType.RANDOM_FOREST,
         AttackType.K_NEAREST_NEIGHBORS,
         # AttackType.THRESHOLD_ENTROPY_ATTACK
     ]
 
-    attacks_result = mia.run_attacks(attack_input=attack_input)
-                                     #slicing_spec=slicing_spec,
-                                     #attack_types=attack_types)
+    attacks_result = mia.run_attacks(attack_input=attack_input,
+                                     slicing_spec=slicing_spec,
+                                     attack_types=attack_types)
 
     return attacks_result, attack_input, slicing_spec
 
