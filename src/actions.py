@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from tqdm import tqdm
-from utils.plotter import *
 from utils.utils import validate_path
 import conf
 
@@ -66,7 +64,7 @@ def test_model(dataloader, model, path=None, mode='test', rnn=True):
     loss = 0.0
     acc = 0
     logits, tru_preds = [], []
-    
+
     if path:
         validate_path(path)
         print(f"loading saved model - {path}....")
@@ -94,7 +92,7 @@ def test_model(dataloader, model, path=None, mode='test', rnn=True):
         correct_preds = preds == tar.data
         indices = correct_preds.nonzero()
         correct_preds = torch.squeeze(pred[indices])
-        tru_preds.append(correct_preds.cpu().detach())        
+        tru_preds.append(correct_preds.cpu().detach())
 
     if mode == 'train':
         return loss, acc
@@ -102,5 +100,3 @@ def test_model(dataloader, model, path=None, mode='test', rnn=True):
         print('Test Loss: {}, Acc: {}'.format(
             loss/len(dataloader.dataset), acc / len(dataloader.dataset)))
         return torch.cat(logits, dim=0), torch.cat(tru_preds, dim=0)
-
-

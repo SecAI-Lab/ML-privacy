@@ -4,21 +4,24 @@ from actions import train_model
 from models import BaseModel
 import torch.nn as nn
 
+
 class DenseNet(BaseModel):
     """CNN model for target"""
-    def __init__(self, num_classes, path) -> None:
-        super().__init__(num_classes)   
-        self.path = path                     
-        self.model = torchvision.models.densenet121(weights=torchvision.models.DenseNet121_Weights.IMAGENET1K_V1)       
-                
-    def train(self, dataloader):                
+
+    def __init__(self, num_classes) -> None:
+        super().__init__(num_classes)
+        self.model = torchvision.models.densenet121(
+            weights=torchvision.models.DenseNet121_Weights.IMAGENET1K_V1)
+
+    def train(self, dataloader, path):
         model = self.update_out_layer()
         model = model.to(conf.device)
-        train_model(dataloader, model, self.path, 'target', rnn=False)
+        train_model(dataloader, model, path, 'target', rnn=False)
 
 
 class GRU(nn.Module):
     """RNN model for target"""
+
     def __init__(self, n_layers, hidden_dim, n_vocab, embed_dim, n_classes, dropout_p=0.2):
         super(GRU, self).__init__()
         self.n_layers = n_layers
@@ -33,9 +36,9 @@ class GRU(nn.Module):
 
     def forward(self, x):
         x = self.embed(x)
-        h_0 = self._init_state(batch_size=x.size(0)) 
-        x, _ = self.gru(x, h_0)  
-        h_t = x[:,-1,:] 
+        h_0 = self._init_state(batch_size=x.size(0))
+        x, _ = self.gru(x, h_0)
+        h_t = x[:, -1, :]
         self.dropout(h_t)
         logit = self.out(h_t)
         return logit
@@ -43,8 +46,6 @@ class GRU(nn.Module):
     def _init_state(self, batch_size=1):
         weight = next(self.parameters()).data
         return weight.new(self.n_layers, batch_size, self.hidden_dim).zero_()
-
-
 
 
 """

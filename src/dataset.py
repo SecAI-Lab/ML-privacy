@@ -1,18 +1,16 @@
-from typing import Any, List, Union, Tuple
-from utils.data import WhiteBoxDataloader
-import torchvision.transforms as transforms
-import PIL.Image as Image
-import numpy as np
-import torch
 from torchvision.datasets import CIFAR100, CIFAR10
 from torch.utils.data import DataLoader, Dataset
-from torchtext import datasets, data
-import conf
-from utils import utils
-import pandas as pd
+import torchvision.transforms as transforms
+from typing import Any, List, Union, Tuple
+from utils.data import WhiteBoxDataloader
+import PIL.Image as Image
 import random
+import torch
 import os
-from utils.plotter import *
+
+from utils import utils
+import conf
+
 
 torch.manual_seed(17)
 
@@ -41,18 +39,18 @@ class CifarDataset:
         batch_size = conf.batch_size
         if c.n_classes == 100:
             trainset1 = CIFAR100(root='./data', train=True,
-                                download=True, transform=transform1)
+                                 download=True, transform=transform1)
             # trainset2 = CIFAR100(root='./data', train=True,
             #                      download=True, transform=transform2)
 
-            testset = CIFAR100(root='./data', train=False,        
-                            download=True, transform=transform1)
+            testset = CIFAR100(root='./data', train=False,
+                               download=True, transform=transform1)
         else:
             trainset1 = CIFAR10(root='./data', train=True,
-                                download=True, transform=transform1)         
+                                download=True, transform=transform1)
 
-            testset = CIFAR10(root='./data', train=False,        
-                            download=True, transform=transform1)
+            testset = CIFAR10(root='./data', train=False,
+                              download=True, transform=transform1)
 
         trainset = trainset1  # + trainset2
         dataset = testset + trainset
@@ -92,14 +90,14 @@ class UTKFaceDataset(Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.processed_path = os.path.join(self.root, 'processed.txt')
-       
+
         if isinstance(attr, list):
             self.attr = attr
         else:
             self.attr = [attr]
 
-        self.lines = []       
-            
+        self.lines = []
+
         with open(self.processed_path, 'r') as f:
             assert f is not None
             for i in f:
@@ -150,29 +148,33 @@ class UTKFaceDataset(Dataset):
 
         return image, target
 
+
 def get_UTKDataloader():
-    transform_one = transforms.Compose([            
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ])
+    transform_one = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
     transform_two = transforms.Compose([
-            transforms.RandomHorizontalFlip(p=1),
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ])
-    trainset_one = UTKFaceDataset(root='./data/UTKFace/train', transform=transform_one)  
-    trainset_two = UTKFaceDataset(root='./data/UTKFace/train', transform=transform_two)  
-    testset = UTKFaceDataset(root='./data/UTKFace/test', transform=transform_one)  
-    
+        transforms.RandomHorizontalFlip(p=1),
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
+    trainset_one = UTKFaceDataset(
+        root='./data/UTKFace/train', transform=transform_one)
+    trainset_two = UTKFaceDataset(
+        root='./data/UTKFace/train', transform=transform_two)
+    testset = UTKFaceDataset(
+        root='./data/UTKFace/test', transform=transform_one)
+
     dataset = trainset_one + trainset_two + testset
-    len_ = len(dataset) // 2 + 1    
+    len_ = len(dataset) // 2 + 1
     target_train, target_val, shadow_train, shadow_val = torch.utils.data.random_split(
-            dataset,
-            [int(len_*0.8)+1, int(len_*0.2),
-            int(len_*0.8), int(len_*0.2)]            
-        )
+        dataset,
+        [int(len_*0.8)+1, int(len_*0.2),
+            int(len_*0.8), int(len_*0.2)]
+    )
     batch_size = conf.batch_size
     target_trainloader = DataLoader(
         target_train, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -189,9 +191,9 @@ def get_UTKDataloader():
         shadow_trainloader=shadow_trainloader,
         shadow_valloader=shadow_valloader
     )
-    
+
     return dataloader
-        
+
 
 class AttackDataset(Dataset):
     def __init__(self, train_logits, test_logits, train=True) -> None:
@@ -207,7 +209,7 @@ class AttackDataset(Dataset):
     def __len__(self):
         return len(self.logits)
 
-    def init_label(self):        
+    def init_label(self):
         attack_data = []
         # dist_neg = torch.cdist(self.train_logits, self.test_logits)
         # dist_pos = torch.cdist(self.train_logits, self.train_logits_)
@@ -239,40 +241,5 @@ def prepare_attack_data(train_logits, test_logits):
         attack_data.append((non_member.cpu().detach().numpy(), 0))
 
     random.shuffle(attack_data)
-    plot_pred_diff(train_logits[:100], test_logits[:100])
+    # plot_pred_diff(train_logits[:100], test_logits[:100])
     return attack_data
-
-
-
-"""
-class ImdbReviewsDataset:
-    def __init__(self) -> None:
-        self.vocab_size, self.n_clases, self.trainset, self.testset = self.init_voca()
-
-    def init_voca(self):
-        TEXT = data.Field(sequential=True, batch_first=True, lower=True)
-        LABEL = data.Field(sequential=False, batch_first=True)
-        trainset, testset = datasets.IMDB.splits(TEXT, LABEL)
-        TEXT.build_vocab(trainset, min_freq=5)
-        LABEL.build_vocab(trainset)
-        vocab_size = len(TEXT.vocab)
-        n_classes = len(LABEL.vocab) - 1
-        return vocab_size, n_classes, trainset, testset
-
-    def get_dataset(self):
-        target_train, target_test = self.trainset.split(split_ratio=0.8)
-        shadow_train, shadow_test = self.testset.split(split_ratio=0.8)
-        target_trainloader, shadow_trainloader, target_valloader, shadow_valloader = data.BucketIterator.splits(
-            (target_train, shadow_train, target_test,
-             shadow_test), batch_size=conf.batch_size,
-            shuffle=True, repeat=False)
-
-        dataloader = WhiteBoxDataloader(
-            target_trainloader=target_trainloader,
-            target_valloader=target_valloader,
-            shadow_trainloader=shadow_trainloader,
-            shadow_valloader=shadow_valloader
-        )        
-        return dataloader
-"""    
-
