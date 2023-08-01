@@ -1,29 +1,47 @@
 import torch
+from dataclasses import dataclass
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-cifar_classes = 10
-epochs = 10
+epochs = 20
 batch_size = 32
 
-# data sizes for splitting
-unseen_test = 1000  # not used yet
-target_train = 25000  # 60000
-shadow_train = 25000  # 40000
-target_val = 5000
-shadow_val = 5000
-cifar_target_path = './weights/target_cifar10.pt'
-cifar_shadow_path = './weights/shadow_cifar10.pt'
-attackers_path = {
-    'rf_path': './weights/RF_attack_cifar10.joblib',
-    'lr_path': './weights/LR_attack_cifar10.joblib',
-    'mlp_path': './weights/MLP_attack_cifar10.joblib',
-    'knn_path': './weights/KNN_attack_cifar10.joblib',
-}
-# rnn configs
-n_layers = 1
-hidden_dim = 256
-emdeb_dim = 128
-imdb_target_path = './weights/target_imdb.pt'
-imdb_shadow_path = './weights/shadow_imdb.pt'
+@dataclass
+class CifarConf:    
+    n_classes = 10
+    target_train = 25000  # 60000 --> when augmented
+    shadow_train = 25000  # 40000 --> when augmented
+    target_val = 5000
+    shadow_val = 5000
+    data_type = f'cifar{n_classes}'
+    target_path = f'./weights/target_{data_type}.pt'
+    shadow_path = f'./weights/shadow_{data_type}.pt'
+    nn_attacker_path = f'./weights/rnnAttack_{data_type}.pt'
+    attackers_path = {
+        'rf_path': f'./weights/RF_attack_{data_type}.joblib',
+        'lr_path': f'./weights/LR_attack_{data_type}.joblib',
+        'mlp_path': f'./weights/MLP_attack_{data_type}.joblib',
+        'knn_path': f'./weights/KNN_attack_{data_type}.joblib',
+    }
 
-attack_for_rnn = './weights/RF_attack_rnn.joblib'
+@dataclass
+class UTKFaceConf:
+    n_classes = 4 # 4 -> race, 117 -> age, 3 -> gender
+    data_type = f'utkface{n_classes}'
+    target_path = f'./weights/target_{data_type}.pt'
+    shadow_path = f'./weights/shadow_{data_type}.pt'
+    nn_attacker_path = f'./weights/rnnAttack_{data_type}.pt'
+    attackers_path = {
+        'rf_path': f'./weights/RF_attack_{data_type}.joblib',
+        'lr_path': f'./weights/LR_attack_{data_type}.joblib',
+        'mlp_path': f'./weights/MLP_attack_{data_type}.joblib',
+        'knn_path': f'./weights/KNN_attack_{data_type}.joblib',
+    }
+
+@dataclass
+class RNNConf:
+    n_layers = 1
+    hidden_dim = 256
+    emdeb_dim = 128
+    target_path = './weights/target_imdb.pt'
+    shadow_path = './weights/shadow_imdb.pt'
+    attack_for_rnn = './weights/RF_attack_rnn.joblib'

@@ -8,13 +8,19 @@ class BaseModel(ABC):
         self.model = None
         self.classes = num_classes
 
-    def fine_tune(self):
-        model = self.model        
-        model.classifier = nn.Linear(model.classifier.in_features, self.classes)
+    def update_out_layer(self, model_name='densenet'):
+        model = self.model                        
+        if model_name == 'densenet':            
+            model.classifier = nn.Linear(model.classifier.in_features, self.classes)
+        else:
+            model.fc = nn.Linear(model.fc.in_features, self.classes)
         return model
 
-    def test(self, model_path, dataloader):
-        model = self.fine_tune()
+    def test(self, model_path, dataloader):        
+        if 'resnet' in model_path:
+            model = self.update_out_layer('resnet')
+        else:            
+            model = self.update_out_layer()
         model = model.to(conf.device)
         probs = test_model(dataloader, model, model_path, rnn=False)
         return probs

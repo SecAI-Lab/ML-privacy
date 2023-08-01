@@ -6,14 +6,15 @@ import torch.nn as nn
 
 class DenseNet(BaseModel):
     """CNN model for target"""
-    def __init__(self, num_classes) -> None:
-        super().__init__(num_classes)                        
+    def __init__(self, num_classes, path) -> None:
+        super().__init__(num_classes)   
+        self.path = path                     
         self.model = torchvision.models.densenet121(weights=torchvision.models.DenseNet121_Weights.IMAGENET1K_V1)       
                 
     def train(self, dataloader):                
-        model = self.fine_tune()
+        model = self.update_out_layer()
         model = model.to(conf.device)
-        train_model(dataloader, model, conf.cifar_target_path, 'target', rnn=False)
+        train_model(dataloader, model, self.path, 'target', rnn=False)
 
 
 class GRU(nn.Module):
