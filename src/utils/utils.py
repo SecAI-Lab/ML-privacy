@@ -3,13 +3,10 @@ import numpy as np
 
 
 def validate_path(path):
-    print(path, os.path.exists(path))
     if os.path.exists(path):
         return True
-    if not os.path.exists(path) and os.path(path).isdir():
-        os.makedirs(path)
-    elif not os.path.exists(path):
-        raise ValueError("Path doesn't exist")
+    else:
+        os.makedirs('../weights')
 
 
 def get_labels(data):

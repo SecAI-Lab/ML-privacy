@@ -8,7 +8,7 @@ batch_size = 32
 
 @dataclass
 class CifarConf:
-    n_classes = 10
+    n_classes = 100
     target_train = 25000  # 60000 --> when augmented
     shadow_train = 25000  # 40000 --> when augmented
     target_val = 5000

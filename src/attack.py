@@ -1,4 +1,4 @@
-from models.attacker import EnsembleAttacker
+from models.attacks.rf_ensemble import EnsembleAttacker
 from models.shadow import ShadowModel
 from models.target import DenseNet
 from dataset import *

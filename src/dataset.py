@@ -211,10 +211,10 @@ class AttackDataset(Dataset):
 
     def init_label(self):
         attack_data = []
-        # dist_neg = torch.cdist(self.train_logits, self.test_logits)
-        # dist_pos = torch.cdist(self.train_logits, self.train_logits_)
+        dist_neg = torch.cdist(self.train_logits, self.test_logits)
+        dist_pos = torch.cdist(self.train_logits, self.train_logits_)
 
-        for member, non_member in zip(self.train_logits, self.test_logits):
+        for member, non_member in zip(dist_pos, dist_neg):
             attack_data.append((member.cpu().detach().numpy(), 1))
             attack_data.append((non_member.cpu().detach().numpy(), 0))
 
