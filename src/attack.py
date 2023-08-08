@@ -1,4 +1,5 @@
 from models.attacks.rf_ensemble import EnsembleAttacker
+from models.attacks.siamese_net import SiamAttacker
 from models.shadow import ShadowModel
 from models.target import DenseNet
 from dataset import *
@@ -15,10 +16,10 @@ if __name__ == '__main__':
     # target.train(dataloader, CifarConf.target_path)
     # shadow.train(dataloader, CifarConf.shadow_path)
 
-    sh_train_logits, sh_train_tru_preds = shadow.test(
-        CifarConf.shadow_path, dataloader.shadow_trainloader)
-    sh_test_logits, sh_test_tru_preds = shadow.test(
-        CifarConf.shadow_path, dataloader.shadow_valloader)
+    # sh_train_logits, sh_train_tru_preds = shadow.test(
+    #     CifarConf.shadow_path, dataloader.shadow_trainloader)
+    # sh_test_logits, sh_test_tru_preds = shadow.test(
+    #     CifarConf.shadow_path, dataloader.shadow_valloader)
 
     t_train_logits, t_train_tru_preds = target.test(
         CifarConf.target_path, dataloader.target_trainloader)
@@ -26,9 +27,13 @@ if __name__ == '__main__':
         CifarConf.target_path, dataloader.target_valloader)
     attacker_path = CifarConf.attacker_path
 
-    attack_train_data = prepare_attack_data(sh_train_logits, sh_test_logits)
-    attack_test_data = prepare_attack_data(t_train_logits, t_test_logits)
+    attacker = SiamAttacker(attacker_path, CifarConf.n_classes)
+    # attacker = EnsembleAttacker(attacker_path)
 
-    attacker = EnsembleAttacker(attacker_path)
-    attacker.train(attack_train_data)
+    # attack_train_data = prepare_attack_data(
+    #     sh_train_logits, sh_test_logits, nn_attack=True)
+    attack_test_data = prepare_attack_data(
+        t_train_logits, t_test_logits, nn_attack=True)
+
+    # attacker.train(attack_train_data)
     attacker.test(attack_test_data)

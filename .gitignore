@@ -1,7 +1,8 @@
+env
 /.ipynb_checkpoints/
 **/__pycache__/**
 **/.vscode/**
-env
+**/canary-in-a-coalmine/**
 **/dataset/**
 **/data/**
 **/.data/**

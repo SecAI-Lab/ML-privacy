@@ -196,50 +196,52 @@ def get_UTKDataloader():
 
 
 class AttackDataset(Dataset):
-    def __init__(self, train_logits, test_logits, train=True) -> None:
+    def __init__(self, train_logits, test_logits) -> None:
         super().__init__()
         self.test_logits = torch.cat([test_logits, test_logits])
-        self.train_logits_ = train_logits[len(
-            test_logits)*2:len(test_logits)*4]
+        self.len_ = int(len(self.test_logits)/2)
+        self.train_logits_ = train_logits[len(self.test_logits):]
         self.train_logits = train_logits[:len(self.test_logits)]
-        logits = self.init_label()
-        self.logits, self.logit_labels = utils.split_data(logits)
-        self.is_train = train
+        self.data = []
+        self.init_label()
 
     def __len__(self):
-        return len(self.logits)
+        return len(self.data)
+
+    def build_pairs(self, v1, v2, label):
+        for i, j in zip(v1, v2):
+            i = i.cpu().detach().numpy()
+            j = j.cpu().detach().numpy()
+            self.data.append((i, j, label))
 
     def init_label(self):
-        attack_data = []
-        dist_neg = torch.cdist(self.train_logits, self.test_logits)
-        dist_pos = torch.cdist(self.train_logits, self.train_logits_)
+        self.build_pairs(self.train_logits, self.test_logits, 0)
+        self.build_pairs(
+            self.test_logits[:self.len_], self.test_logits[self.len_:], 1)
+        self.build_pairs(
+            self.train_logits[:self.len_], self.train_logits[self.len_:], 1)
 
+    def __getitem__(self, idx):
+        return self.data[idx]
+
+
+def prepare_attack_data(train_logits, test_logits, nn_attack=False):
+    attack_data = []
+    if not nn_attack:
+        test_len = len(test_logits)
+        train_logits_ = train_logits[:test_len]
+        train_logits = train_logits[test_len:test_len*2]
+
+        dist_neg = torch.cdist(train_logits, test_logits)
+        dist_pos = torch.cdist(train_logits, train_logits_)
+
+        # Labeling positive and negative samples
         for member, non_member in zip(dist_pos, dist_neg):
             attack_data.append((member.cpu().detach().numpy(), 1))
             attack_data.append((non_member.cpu().detach().numpy(), 0))
+        random.shuffle(attack_data)
+    else:
+        ds = AttackDataset(train_logits, test_logits)
+        attack_data = DataLoader(ds, shuffle=True, batch_size=64)
 
-        return attack_data
-
-    def __getitem__(self, idx):
-        return (self.logits[idx], self.logit_labels[idx])
-
-
-def prepare_attack_data(train_logits, test_logits):
-    """Preparing data for non-NN attack model"""
-
-    attack_data = []
-    test_len = len(test_logits)
-    train_logits_ = train_logits[:test_len]
-    train_logits = train_logits[test_len:test_len*2]
-
-    dist_neg = torch.cdist(train_logits, test_logits)
-    dist_pos = torch.cdist(train_logits, train_logits_)
-
-    # Labeling positive and negative samples
-    for member, non_member in zip(dist_pos, dist_neg):
-        attack_data.append((member.cpu().detach().numpy(), 1))
-        attack_data.append((non_member.cpu().detach().numpy(), 0))
-
-    random.shuffle(attack_data)
-    # plot_pred_diff(train_logits[:100], test_logits[:100])
     return attack_data

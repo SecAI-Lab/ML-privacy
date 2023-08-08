@@ -8,7 +8,7 @@ batch_size = 32
 
 @dataclass
 class CifarConf:
-    n_classes = 100
+    n_classes = 10
     target_train = 25000  # 60000 --> when augmented
     shadow_train = 25000  # 40000 --> when augmented
     target_val = 5000
@@ -17,7 +17,8 @@ class CifarConf:
     target_path = f'../weights/target_{data_type}.pt'
     shadow_path = f'../weights/shadow_{data_type}.pt'
     nn_attacker_path = f'../weights/rnnAttack_{data_type}.pt'
-    attacker_path = f'../weights/RF_attack_{data_type}.joblib'
+    # attacker_path = f'../weights/RF_attack_{data_type}.joblib'
+    attacker_path = f'../weights/siam_attack_{data_type}.pt'
 
 
 @dataclass
